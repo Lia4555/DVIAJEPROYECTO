@@ -1,0 +1,121 @@
+
+.contenedor-principal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  
+  background: radial-gradient(circle, #ff4d4d 0%, #b30000 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+.tarjeta-blanca {
+  background: white;
+  display: flex;
+  border-radius: 50px; 
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+  width: 950px;
+  height: 550px;
+  overflow: hidden;
+}
+
+
+.lado-imagen {
+  flex: 1.2;
+  background-color: #eee;
+}
+
+.lado-imagen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.lado-formulario {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.icono-usuario {
+  font-size: 45px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+h2 {
+  margin-bottom: 25px;
+  color: #333;
+  font-size: 28px;
+}
+
+
+input {
+  width: 100%;
+  padding: 14px 20px;
+  margin-bottom: 15px;
+  border: none;
+  border-radius: 30px;
+  background-color: #eceff1;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+
+.boton-rojo {
+  width: 100%;
+  padding: 15px;
+  background-color: #cc0000;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 10px;
+  transition: 0.3s;
+}
+
+.boton-rojo:hover {
+  background-color: #a00000;
+}
+
+
+.enlaces-inferiores {
+  margin-top: 20px;
+}
+
+.boton-enlace {
+  background: none;
+  border: none;
+  color: #0066cc;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+
+.fila-inputs {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+.lado-imagen img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  min-height: 550px; 
+}
