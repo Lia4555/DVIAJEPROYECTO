@@ -1,5 +1,6 @@
 –-INSERTS 
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- 1. Roles 
 INSERT INTO Roles (nombre_rol, descripcion, nivel_permiso) VALUES
