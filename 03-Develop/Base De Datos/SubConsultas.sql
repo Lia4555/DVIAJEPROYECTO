@@ -1,4 +1,4 @@
-–1). Conductores con más servicios realizados 
+--1). Conductores con más servicios realizados 
 
 SELECT 
     c.nombre,
@@ -9,7 +9,7 @@ FROM Conductor c
 WHERE (SELECT COUNT(*) FROM Servicios s WHERE s.id_conductor = c.id_Conductor) > 0
 ORDER BY total_servicios DESC;
 
-–2). Vehiculos con documentacion a vencer en menos de 30 días 
+--2). Vehiculos con documentacion a vencer en menos de 30 días 
 
 SELECT 
     v.placa,
@@ -26,7 +26,7 @@ WHERE (SELECT COUNT(*) FROM DocumentosVehiculo dv
        AND dv.fecha_vencimiento BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days') > 0;
 
 
-–3).Clientes mas frecuentes 
+--3).Clientes mas frecuentes 
 SELECT 
     cl.nombre,
     cl.apellido,
@@ -41,7 +41,7 @@ FROM Cliente cl
 WHERE (SELECT COUNT(*) FROM Reservas r WHERE r.id_Cliente = cl.id_Cliente) > 0
 ORDER BY total_viajes DESC;
 
-–4). Conductores sin vehiculo asignado actualmente pero que han trabajo antes 
+--4). Conductores sin vehiculo asignado actualmente pero que han trabajo antes 
 SELECT 
     c.nombre,
     c.apellido,
@@ -55,7 +55,7 @@ WHERE NOT EXISTS (SELECT 1 FROM Vehiculos v WHERE v.id_conductor_asignado = c.id
 AND EXISTS (SELECT 1 FROM HistorialConductores hc WHERE hc.id_conductor = c.id_Conductor);
 
 
-–5).Destinos mas populares 
+--5).Destinos mas populares 
 SELECT 
     d.nombre_destino,
     d.ciudad,
@@ -68,7 +68,7 @@ WHERE (SELECT COUNT(*) FROM Servicios s WHERE s.id_destino = d.id_destino) > 0
    OR (SELECT COUNT(*) FROM Servicios s WHERE s.id_origen = d.id_destino) > 0
 ORDER BY total_movimientos DESC;
 
-–6). Vehículos que requieren mantenimiento proximo 
+--6). Vehículos que requieren mantenimiento proximo 
 
 SELECT 
     v.placa,
@@ -86,7 +86,7 @@ FROM Vehiculos v
 WHERE v.fecha_proximo_mantenimiento <= CURRENT_DATE + INTERVAL '15 days'
 AND v.estado_operativo = TRUE;
 
-–7).Reservas con requerimiento superior 
+--7).Reservas con requerimiento superior 
 SELECT 
     r.numero_reserva,
     (SELECT CONCAT(cl.nombre, ' ', cl.apellido) FROM Cliente cl WHERE cl.id_Cliente = r.id_Cliente) AS nombre_cliente,
@@ -98,18 +98,4 @@ SELECT
 FROM Reservas r
 WHERE r.precio_pagado > (SELECT AVG(r2.precio_pagado) FROM Reservas r2 WHERE r2.id_servicio = r.id_servicio);
 
- –8). Alertas no resueltas de alta prioridad 
-SELECT 
-    a.id_alerta,
-    a.tipo_alerta,
-    a.descripcion,
-    a.fecha_creacion,
-    a.fecha_limite,
-    (SELECT CONCAT(c.nombre, ' ', c.apellido) FROM Conductor c WHERE c.id_Conductor = a.id_usuario_destino) AS conductor_destino,
-    (SELECT v.placa FROM Vehiculos v WHERE v.id_vehiculo = a.id_vehiculo_relacionado) AS vehiculo_relacionado,
-    DATEDIFF(a.fecha_limite, CURRENT_DATE) AS dias_para_vencer
-FROM Alertas a
-WHERE a.estado_resuelta = FALSE 
-AND a.prioridad >= 4
-ORDER BY a.prioridad DESC, a.fecha_limite ASC;
-
+ 
