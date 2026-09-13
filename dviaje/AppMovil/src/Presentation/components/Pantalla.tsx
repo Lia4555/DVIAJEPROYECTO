@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '../theme';
 
 interface Props {
@@ -7,37 +7,41 @@ interface Props {
   subtitulo?: string;
   children: ReactNode;
   accion?: ReactNode;
+  /** Algo que va encima del titulo (p. ej. "Volver"). */
+  arriba?: ReactNode;
 }
 
-// En Android la barra de estado se dibuja encima del contenido, asi que
-// hay que dejarle su altura libre a mano.
-const altoBarraEstado = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 0;
-
-/** Marco comun de todas las pantallas: cabecera + area de contenido. */
-export const Pantalla = ({ titulo, subtitulo, children, accion }: Props) => (
+/**
+ * Marco comun de las secciones del panel: titulo grande + subtitulo
+ * (.cond-head del web) y el contenido debajo. La cabecera color vino y la
+ * barra de estado las pone BarraSuperior.
+ */
+export const Pantalla = ({ titulo, subtitulo, children, accion, arriba }: Props) => (
   <View style={estilos.fondo}>
     <View style={estilos.cabecera}>
-      <View style={estilos.textos}>
-        <Text style={typography.titulo}>{titulo}</Text>
-        {subtitulo && <Text style={typography.ayuda}>{subtitulo}</Text>}
+      {arriba}
+      <View style={estilos.fila}>
+        <View style={estilos.textos}>
+          <Text style={typography.titulo}>{titulo}</Text>
+          {subtitulo && <Text style={estilos.sub}>{subtitulo}</Text>}
+        </View>
+        {accion}
       </View>
-      {accion}
     </View>
     <View style={estilos.contenido}>{children}</View>
   </View>
 );
 
 const estilos = StyleSheet.create({
-  fondo: { flex: 1, backgroundColor: colors.fondo, paddingTop: altoBarraEstado },
+  fondo: { flex: 1, backgroundColor: colors.papel },
   cabecera: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl,
     paddingBottom: spacing.md,
-    gap: spacing.md
+    gap: spacing.sm
   },
-  textos: { flex: 1, gap: 2 },
+  fila: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.md },
+  textos: { flex: 1, gap: 4 },
+  sub: { color: colors.muted, fontSize: 14, lineHeight: 20 },
   contenido: { flex: 1, paddingHorizontal: spacing.lg }
 });

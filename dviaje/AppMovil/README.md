@@ -75,20 +75,21 @@ completa.
 
 ### Paso 1 — Levantar el backend
 ```bash
-cd ..
+cd ..              # el backend es la carpeta padre: Backend/
 npm install
 npm run dev        # queda en http://localhost:3000
 ```
 
 ### Paso 2 — Revisar la dirección del servidor
-Se configura en **`src/Data/config/ApiConfig.ts`**:
+Se decide sola en **`src/Data/config/ApiConfig.ts`**, en este orden:
 
-- **Emulador de Android Studio:** ya viene listo (`10.0.2.2:3000`). Esa IP es
-  como el emulador ve el `localhost` del computador; `127.0.0.1` sería el
-  propio teléfono virtual.
-- **Teléfono físico:** cambia `IP_EN_RED_LOCAL` por la IP del computador
-  (`ipconfig` → *Dirección IPv4*, algo como `192.168.1.15`) y usa
-  `baseUrlDispositivoFisico`. El teléfono y el PC deben estar en la misma wifi.
+1. **`EXPO_PUBLIC_API_URL`**, si la defines (por ejemplo en un `.env` de esta carpeta):
+   `EXPO_PUBLIC_API_URL=http://192.168.1.15:3000/api`.
+2. **La IP del computador que ejecuta Expo.** Sirve igual en el emulador que en un
+   teléfono físico, siempre que estén en la misma wifi y el firewall de Windows
+   permita el puerto 3000.
+3. Si no hay nada de lo anterior: `10.0.2.2:3000` en el emulador (así ve el emulador
+   el `localhost` del computador).
 
 ### Paso 3 — Generar el proyecto nativo y ejecutar
 ```bash
@@ -97,7 +98,7 @@ npm run android      # genera android/ si falta, compila e instala la app
 ```
 
 Para abrirlo **dentro de Android Studio**: *File → Open* y selecciona la
-carpeta **`AppMovil/android`**. Espera a que Gradle sincronice y dale al botón
+carpeta **`Backend/AppMovil/android`**. Espera a que Gradle sincronice y dale al botón
 verde ▶ con el emulador arrancado.
 
 > La carpeta `android/` la genera Expo (`npm run prebuild`). Si algo se rompe,

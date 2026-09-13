@@ -1,4 +1,4 @@
-import { Usuario } from '../../Domain/entities';
+import { SolicitudCuenta, Usuario } from '../../Domain/entities';
 import { HttpClient } from '../api/HttpClient';
 
 // Respuestas tal como las envia el backend (controllers/authController.js).
@@ -18,6 +18,11 @@ export class AuthApiSource {
 
   login(correo: string, contrasena: string): Promise<RespuestaLogin> {
     return this.http.post<RespuestaLogin>('/auth/login', { correo, contrasena });
+  }
+
+  async registrar(solicitud: SolicitudCuenta): Promise<string> {
+    const respuesta = await this.http.post<{ message: string }>('/auth/register', solicitud);
+    return respuesta.message;
   }
 
   async me(): Promise<Usuario> {

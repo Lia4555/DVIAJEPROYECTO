@@ -1,16 +1,17 @@
 # D' VIAJE · Panel de administración (frontend)
 
 Interfaz web en **React + Vite** para administrar las 16 tablas del backend
-`Transporte-api` (Express + Supabase): flota, conductores, clientes, servicios,
-reservas, alertas y catálogos.
+(Express + Supabase, en la carpeta padre `Backend/`): flota, conductores, clientes,
+servicios, reservas, alertas, catálogos y cuentas de acceso.
 
 ---
 
 ## Puesta en marcha
 
 ```bash
-# 1. Backend (en otra terminal)
-cd ../Transporte-api
+# 1. Backend (en otra terminal): es la carpeta padre, Backend/.
+#    No uses ../Transporte-api: es una copia antigua sin cookies ni permisos.
+cd ..
 npm install
 npm run dev            # http://localhost:3000
 

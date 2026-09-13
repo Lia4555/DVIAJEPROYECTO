@@ -8,10 +8,21 @@ import {
   Text,
   View
 } from 'react-native';
-import { AppCard, AvisoError, Badge, Cargando, Pantalla, SinDatos } from '../components';
-import { FiltroServicios, useServiciosViewModel } from '../hooks';
+import {
+  AppButton,
+  AppCard,
+  AvisoError,
+  Badge,
+  Cargando,
+  Dato,
+  Icono,
+  Pantalla,
+  RejillaDatos,
+  SinDatos
+} from '../components';
+import { FiltroServicios, useServiciosViewModel, useSesion } from '../hooks';
 import { Catalogos, Servicio, nombreDestino, nombreEstado, vaConRetraso } from '../../Domain/entities';
-import { colorEstado, colors, formatearFechaHora, radius, spacing, typography } from '../theme';
+import { colors, formatearFechaHora, radius, spacing, TONOS, tonoEstado, typography } from '../theme';
 
 interface Props {
   catalogos: Catalogos;
@@ -25,41 +36,64 @@ const FILTROS: { id: FiltroServicios; titulo: string }[] = [
   { id: 'retrasados', titulo: 'Retrasados' }
 ];
 
-/** VISTA: lista de viajes asignados. */
+/** VISTA: lista de viajes asignados, con las fichas del panel web (.serv-card). */
 export const ServiciosView = ({ catalogos, onAbrirServicio, nombreUsuario }: Props) => {
   const vm = useServiciosViewModel();
+  const { esAdmin } = useSesion();
 
   const tarjeta = (servicio: Servicio) => {
     const estado = nombreEstado(catalogos, servicio.id_estado);
     const retrasado = vaConRetraso(servicio);
 
     return (
-      <AppCard onPress={() => onAbrirServicio(servicio.id_servicio)} estilo={estilos.tarjeta}>
-        <View style={estilos.fila}>
-          <Text style={typography.subtitulo}>{servicio.codigo_servicio}</Text>
-          <Badge texto={estado} color={colorEstado(estado)} />
+      <AppCard onPress={() => onAbrirServicio(servicio.id_servicio)}>
+        <View style={estilos.top}>
+          <Text style={estilos.codigo}>{servicio.codigo_servicio}</Text>
+          <Badge texto={estado} tono={tonoEstado(estado)} />
         </View>
 
-        <Text style={typography.cuerpo}>
-          {nombreDestino(catalogos, servicio.id_origen)}
-          {'  ->  '}
-          {nombreDestino(catalogos, servicio.id_destino)}
-        </Text>
-
-        <View style={estilos.fila}>
-          <Text style={typography.ayuda}>
-            Salida: {formatearFechaHora(servicio.fecha_salida)}
-          </Text>
-          <Text style={typography.ayuda}>{servicio.numero_pasajeros} pasajeros</Text>
+        <View style={estilos.ruta}>
+          <View style={estilos.punto}>
+            <Text style={typography.rotulo}>Salida</Text>
+            <Text style={estilos.puntoLugar}>{nombreDestino(catalogos, servicio.id_origen)}</Text>
+            <Text style={estilos.puntoHora}>{formatearFechaHora(servicio.fecha_salida)}</Text>
+          </View>
+          <View style={estilos.flecha}>
+            <Icono nombre="flechaLarga" tamano={22} color={colors.rojo} />
+          </View>
+          <View style={estilos.punto}>
+            <Text style={typography.rotulo}>Llegada estimada</Text>
+            <Text style={estilos.puntoLugar}>{nombreDestino(catalogos, servicio.id_destino)}</Text>
+            <Text style={estilos.puntoHora}>{formatearFechaHora(servicio.fecha_llegada_estimada)}</Text>
+          </View>
         </View>
 
-        {retrasado && <Badge texto="Fuera de horario" color={colors.advertencia} />}
+        <RejillaDatos>
+          <Dato rotulo="Pasajeros" valor={String(servicio.numero_pasajeros ?? '—')} />
+          <Dato rotulo="Tipo" valor={servicio.tipo_servicio || '—'} />
+          <Dato rotulo="Llegada real" valor={formatearFechaHora(servicio.fecha_llegada_real)} />
+        </RejillaDatos>
+
+        {retrasado && <Badge texto="Fuera de horario" tono={TONOS.programado} />}
+
+        {servicio.observaciones ? <Text style={estilos.obs}>{servicio.observaciones}</Text> : null}
+
+        <AppButton
+          titulo={esAdmin ? 'Ver detalle' : 'Actualizar estado'}
+          icono={esAdmin ? 'derecha' : 'editar'}
+          variante={esAdmin ? 'ghost' : 'primario'}
+          pequeno
+          onPress={() => onAbrirServicio(servicio.id_servicio)}
+        />
       </AppCard>
     );
   };
 
   return (
-    <Pantalla titulo="Mis servicios" subtitulo={`Hola, ${nombreUsuario}`}>
+    <Pantalla
+      titulo="Mis servicios"
+      subtitulo={`Hola, ${nombreUsuario}. Los viajes que te asignó el administrador.`}
+    >
       <View style={estilos.filtros}>
         {FILTROS.map((f) => {
           const activo = vm.filtro === f.id;
@@ -68,26 +102,29 @@ export const ServiciosView = ({ catalogos, onAbrirServicio, nombreUsuario }: Pro
               key={f.id}
               onPress={() => vm.cambiarFiltro(f.id)}
               style={[estilos.chip, activo && estilos.chipActivo]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: activo }}
             >
-              <Text style={[estilos.chipTexto, activo && estilos.chipTextoActivo]}>
-                {f.titulo}
-              </Text>
+              <Text style={[estilos.chipTexto, activo && estilos.chipTextoActivo]}>{f.titulo}</Text>
             </Pressable>
           );
         })}
       </View>
 
-      <View style={estilos.resumen}>
-        <Text style={typography.ayuda}>
-          {vm.resumen.total} en total · {vm.resumen.pendientes} pendientes ·{' '}
-          {vm.resumen.retrasados} retrasados
-        </Text>
-      </View>
+      <Text style={estilos.conteo}>
+        <Text style={estilos.conteoNumero}>{vm.servicios.length}</Text> de {vm.resumen.total} servicio
+        {vm.resumen.total === 1 ? '' : 's'} · {vm.resumen.pendientes} pendientes ·{' '}
+        {vm.resumen.retrasados} retrasados
+      </Text>
 
-      {vm.error && <AvisoError mensaje={vm.error} onReintentar={vm.reintentar} />}
+      {vm.error && (
+        <View style={estilos.aviso}>
+          <AvisoError mensaje={vm.error} onReintentar={vm.reintentar} />
+        </View>
+      )}
 
       {vm.cargando ? (
-        <Cargando texto="Consultando tus servicios..." />
+        <Cargando texto="Consultando tus servicios…" />
       ) : (
         <FlatList
           data={vm.servicios}
@@ -99,14 +136,36 @@ export const ServiciosView = ({ catalogos, onAbrirServicio, nombreUsuario }: Pro
             <RefreshControl
               refreshing={vm.refrescando}
               onRefresh={vm.refrescar}
-              tintColor={colors.primarioClaro}
+              colors={[colors.rojo]}
+              tintColor={colors.rojo}
             />
           }
           ListEmptyComponent={
-            <SinDatos
-              titulo="No hay servicios"
-              detalle="Cuando el administrador te asigne un viaje aparecera aqui. Desliza hacia abajo para actualizar."
-            />
+            // Con error no se sabe si hay servicios: el aviso rojo ya lo explica,
+            // y decir "no tienes servicios" seria falso.
+            vm.error ? null : vm.filtro !== 'todos' && vm.resumen.total > 0 ? (
+              <SinDatos
+                titulo="Ningún servicio coincide con el filtro"
+                detalle="Prueba con otro filtro para ver el resto de tus viajes."
+                accion={
+                  <AppButton titulo="Quitar filtro" variante="ghost" pequeno onPress={() => vm.cambiarFiltro('todos')} />
+                }
+              />
+            ) : (
+              <SinDatos
+                titulo="Todavía no tienes servicios asignados"
+                detalle="Cuando el administrador te asigne un viaje aparecerá aquí, con su ruta, su horario y el vehículo."
+                accion={
+                  <AppButton
+                    titulo="Comprobar de nuevo"
+                    icono="actualizar"
+                    variante="ghost"
+                    pequeno
+                    onPress={vm.refrescar}
+                  />
+                }
+              />
+            )
           }
         />
       )}
@@ -115,20 +174,39 @@ export const ServiciosView = ({ catalogos, onAbrirServicio, nombreUsuario }: Pro
 };
 
 const estilos = StyleSheet.create({
-  filtros: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  filtros: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   chip: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: radius.full,
-    backgroundColor: colors.superficie,
+    backgroundColor: colors.blanco,
     borderWidth: 1,
-    borderColor: colors.borde
+    borderColor: colors.linea
   },
-  chipActivo: { backgroundColor: colors.primario, borderColor: colors.primario },
-  chipTexto: { color: colors.textoSuave, fontSize: 13, fontWeight: '600' },
-  chipTextoActivo: { color: colors.primarioTexto },
-  resumen: { marginBottom: spacing.md },
-  lista: { gap: spacing.md, paddingBottom: spacing.xl },
-  tarjeta: { gap: spacing.sm },
-  fila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }
+  chipActivo: { backgroundColor: colors.vino, borderColor: colors.vino },
+  chipTexto: { color: colors.texto, fontSize: 13, fontWeight: '600' },
+  chipTextoActivo: { color: colors.blanco },
+  conteo: { fontSize: 13, color: colors.muted, marginBottom: spacing.md },
+  conteoNumero: { fontSize: 15, fontWeight: '800', color: colors.tinta },
+  aviso: { marginBottom: spacing.md },
+  lista: { gap: 14, paddingBottom: spacing.xxl, flexGrow: 1 },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+  codigo: { fontSize: 17, fontWeight: '800', color: colors.tinta, letterSpacing: 0.2, flexShrink: 1 },
+  ruta: { backgroundColor: colors.papel, borderRadius: radius.sm, padding: spacing.lg, gap: spacing.md },
+  punto: { gap: 3 },
+  puntoLugar: { fontSize: 15, fontWeight: '700', color: colors.tinta },
+  puntoHora: { fontSize: 13, color: colors.muted },
+  // En el telefono la ruta va en vertical: la flecha apunta hacia abajo.
+  flecha: { alignSelf: 'center', transform: [{ rotate: '90deg' }] },
+  obs: {
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.salmon,
+    backgroundColor: colors.rojoSuave,
+    borderTopRightRadius: radius.sm,
+    borderBottomRightRadius: radius.sm,
+    fontSize: 14,
+    color: colors.texto
+  }
 });

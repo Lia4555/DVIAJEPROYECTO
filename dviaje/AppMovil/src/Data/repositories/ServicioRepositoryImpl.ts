@@ -1,4 +1,4 @@
-import { CambioServicio, Servicio } from '../../Domain/entities';
+import { CambioServicio, NuevoServicio, Servicio } from '../../Domain/entities';
 import { ServicioRepository } from '../../Domain/repositories';
 import { TransporteApiSource } from '../sources/TransporteApiSource';
 
@@ -15,5 +15,9 @@ export class ServicioRepositoryImpl implements ServicioRepository {
 
   actualizar(idServicio: number, cambios: CambioServicio): Promise<Servicio> {
     return this.api.actualizarServicio(idServicio, cambios);
+  }
+
+  crear(nuevo: NuevoServicio): Promise<Servicio> {
+    return this.api.crearServicio(nuevo);
   }
 }

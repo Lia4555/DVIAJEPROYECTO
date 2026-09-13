@@ -60,11 +60,59 @@ con esta capa.
 | `clientes`, `reservas`, `roles`, `clases-viaje`, `historial-conductores` | **403.** No los ve. |
 | Crear (`POST`) y eliminar (`DELETE`) en cualquier tabla | **403.** Solo el administrador. |
 
-### No hay registro público
+### Registro con aprobación del administrador
 
-Las dos cuentas son cuentas de trabajo, así que las crea el administrador.
-Si el registro estuviera abierto, cualquiera con el enlace se haría una cuenta
-de conductor. El endpoint `POST /api/auth/register` **ya no existe**.
+Cualquiera puede pedir una cuenta desde la web o la app («Crear una cuenta»), pero
+**no entra hasta que un administrador la apruebe**:
+
+1. `POST /api/auth/register` crea, **apagadas** (`activo = false`), la cuenta en
+   `usuario` y su ficha en `conductor` con el mismo correo. Siempre con rol Conductor:
+   un administrador solo se crea con `npm run crear-admin`. Máximo 5 solicitudes por
+   hora desde la misma conexión.
+2. El login responde **403 «Tu cuenta todavía no está activa»** a esas cuentas. Lo
+   comprueba después de la contraseña, para no revelar a un tercero si un correo tiene
+   solicitud.
+3. El administrador las gestiona en el panel web, en **Personas → Cuentas de acceso**,
+   que usa `/api/cuentas` (solo administrador; nunca devuelve contraseñas):
+
+| Acción | Ruta | Efecto |
+|---|---|---|
+| Listar | `GET /api/cuentas` | Todas las cuentas, con rol, documento y estado. |
+| Aprobar / Reactivar | `PATCH /api/cuentas/:id/aprobar` | Enciende la cuenta y su ficha: ya puede entrar. |
+| Desactivar | `PATCH /api/cuentas/:id/desactivar` | La apaga. No se permite sobre tu propia cuenta ni sobre el último administrador activo. |
+| Rechazar | `DELETE /api/cuentas/:id` | Solo solicitudes pendientes. Borra la cuenta, y la ficha si no tiene servicios ni vehículos. |
+
+Cada cuenta tiene un **estado**:
+
+- **pendiente**: solicitud sin revisar.
+- **activa**: puede entrar.
+- **desactivada**: ya estuvo aprobada y se apagó. Se puede reactivar, pero no rechazar.
+
+Para distinguir pendiente de desactivada hay que ejecutar **una vez**
+[`sql/estado-cuentas.sql`](sql/estado-cuentas.sql), que añade la columna
+`usuario.aprobada_en`. Mientras no se ejecute, un conductor desactivado sigue saliendo como
+pendiente. Los administradores ya se muestran bien sin el script, porque nunca vienen del
+registro.
+
+Al desactivar, una sesión ya abierta sigue válida hasta que caduca (máximo 8 horas).
+
+### Cambios parciales del administrador
+
+Un `PUT /api/<tabla>/:id` del administrador se valida con el esquema de Zod **en modo
+parcial**: se revisa cada campo enviado y no se exigen los demás. El panel web sigue
+mandando el registro entero y la app móvil manda solo lo que cambia (por ejemplo
+`{ "id_conductor": "…" }` para reasignar). Un `PUT` sin ningún campo válido responde 400.
+
+Las fechas con hora aceptan zona horaria (`2026-12-12T09:00:00+00:00`), que es como las
+devuelve Postgres.
+
+### Cortes pasajeros de Supabase
+
+Si Supabase responde 502, 503 o 504 a una **lectura**, `config/supabase.js` la reintenta
+hasta 2 veces. Las escrituras nunca se repiten. Si aun así falla, la API responde 503 con
+«La base de datos tardó en responder…».
+
+El login también limita los intentos: 20 cada 15 minutos por conexión.
 
 ### Cómo se une un conductor con su ficha
 
@@ -90,8 +138,21 @@ En el **SQL Editor** de Supabase, en este orden:
    la cuenta de acceso de cada ficha de conductor que no la tenga, con una
    contraseña temporal (`Conductor2026*`).
 
-El primer script se detiene si quedan usuarios con el antiguo rol *Cliente*: en su
-PASO 4 eliges si convertirlos en conductores o borrarlos.
+En el sistema **no hay usuarios Cliente**: el PASO 4 del primer script borra las cuentas
+de acceso con ese rol (o con cualquier rol de prueba). La tabla `cliente`, con los pasajeros
+de las reservas, no se toca.
+
+`sql/corregir-roles.sql` es un intento anterior de tres niveles (con Cliente) y **no debe
+ejecutarse**.
+
+### Crear la primera cuenta de administrador
+
+```bash
+npm run crear-admin
+```
+
+Pide nombre, apellido, correo y contraseña por la terminal (la contraseña no se ve al
+escribirla) y guarda la cuenta con el rol Administrador.
 
 ---
 
@@ -132,9 +193,11 @@ Con cookies, el CORS no puede ser `*`: `FRONTEND_URL` debe listar el origen exac
 server.js                  Arranque, CORS, registro de las 16 rutas
 config/cookies.js          Atributos de la cookie de sesión (fuente única)
 config/supabase.js         Cliente de Supabase
-controllers/               authController (login/logout/me) + genericController (CRUD)
-middleware/                authMiddleware, permisos, errorHandler
-routers/                   authRouter + genericRouter
+controllers/               authController (login/logout/me), cuentasController (registro
+                           y aprobación de cuentas) y genericController (CRUD)
+middleware/                authMiddleware, permisos, limitador, errorHandler
+routers/                   authRouter, cuentasRouter y genericRouter
+scripts/crear-admin.js     Crea una cuenta de administrador desde la terminal
 schemas/                   Validación con Zod de cada tabla
 sql/                       Scripts de migración de roles y cuentas
 frontend-transporte/       Cliente React (Vite)

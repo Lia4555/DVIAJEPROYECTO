@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+// Nota sobre fechas con hora: Postgres las devuelve con zona horaria
+// ("2026-12-12T09:00:00+00:00"), por eso los datetime aceptan { offset: true }.
+// Sin eso, reenviar una fecha tal como llego de la base daba error 400.
+
 export const schemas = {
   roles: z.object({
     nombre_rol: z.string().min(2),
@@ -51,7 +55,7 @@ export const schemas = {
     numero_documento: z.string(),
     email: z.string().email(),
     telefono: z.string(),
-    fecha_nacimiento: z.string().datetime().optional().or(z.string().date()),
+    fecha_nacimiento: z.string().datetime({ offset: true }).optional().or(z.string().date()),
     direccion: z.string().optional(),
     licencia_conduccion: z.string().optional(),
     categoria_licencia: z.string().max(5).optional(),
@@ -125,9 +129,9 @@ export const schemas = {
   servicios: z.object({
     codigo_servicio: z.string(),
     tipo_servicio: z.string().default('Regular'),
-    fecha_salida: z.string().datetime(),
-    fecha_llegada_estimada: z.string().datetime(),
-    fecha_llegada_real: z.string().datetime().optional(),
+    fecha_salida: z.string().datetime({ offset: true }),
+    fecha_llegada_estimada: z.string().datetime({ offset: true }),
+    fecha_llegada_real: z.string().datetime({ offset: true }).optional(),
     numero_pasajeros: z.number().int().positive(),
     precio_total: z.number().positive(),
     distancia_estimada_km: z.number().optional(),
@@ -146,7 +150,7 @@ export const schemas = {
     clase_viaje: z.number().int(),
     precio_pagado: z.number().positive(),
     estado_reserva: z.string().default('Confirmada'),
-    fecha_check_in: z.string().datetime().optional(),
+    fecha_check_in: z.string().datetime({ offset: true }).optional(),
     id_servicio: z.number().int(),
     id_cliente: z.string().uuid()
   }),

@@ -112,11 +112,17 @@ export const createController = (tableName, primaryKeyName) => {
         }
 
         // Un cambio parcial (conductor) ya viene filtrado y validado por el
-        // middleware de permisos: el esquema completo exigiria el registro
-        // entero y rechazaria un parche de una sola columna.
+        // middleware de permisos. El administrador puede mandar el registro
+        // entero (panel web) o solo lo que cambia (app movil): se valida con
+        // el esquema en modo parcial, que revisa cada campo enviado sin
+        // exigir los demas.
         const schema = schemas[tableName];
         if (schema && !req.cambioParcial) {
-          req.body = schema.parse(req.body);
+          req.body = schema.partial().parse(req.body ?? {});
+        }
+
+        if (!req.body || Object.keys(req.body).length === 0) {
+          return res.status(400).json({ error: 'No enviaste ningún cambio válido.' });
         }
 
         const { data, error } = await supabase

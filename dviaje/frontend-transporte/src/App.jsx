@@ -7,11 +7,11 @@ import {
   limpiarUsuario,
   nombreVisible
 } from './lib/session.js'
-import { entidadesVisibles, groups } from './entities.js'
 import { useNavegacion } from './hooks/useNavegacion.js'
 import Landing from './components/Landing.jsx'
 import Login from './components/Login.jsx'
-import Dashboard from './components/Dashboard.jsx'
+import Registro from './components/Registro.jsx'
+import Dashboard, { SECCIONES_ADMIN } from './components/Dashboard.jsx'
 import PanelConductor, { SECCIONES_CONDUCTOR } from './components/conductor/PanelConductor.jsx'
 import { useToast } from './components/ui/Toast.jsx'
 import './navegacion.css'
@@ -21,11 +21,7 @@ import './navegacion.css'
 // en vez de sacarte de la aplicación.
 export const INICIO = 'inicio'
 export const ENTRAR = 'entrar'
-
-// Secciones del panel de administración, en el orden del menú lateral.
-const SECCIONES_ADMIN = groups.flatMap((grupo) =>
-  entidadesVisibles.filter((e) => e.group === grupo).map((e) => e.key)
-)
+export const REGISTRO = 'registro'
 
 export default function App() {
   // undefined = todavía preguntando al servidor · null = sin sesión
@@ -95,9 +91,9 @@ function Rutas({ usuario, onUsuario, toast }) {
       : SECCIONES_CONDUCTOR.map((s) => s.key)
     : []
 
-  // Sin sesión: portada y login. Con sesión: portada y las secciones del panel.
+  // Sin sesión: portada, login y registro. Con sesión: portada y las secciones del panel.
   const rutas = useMemo(
-    () => (usuario ? [INICIO, ...secciones] : [INICIO, ENTRAR]),
+    () => (usuario ? [INICIO, ...secciones] : [INICIO, ENTRAR, REGISTRO]),
     // `secciones` se deriva de `usuario`: basta con vigilar la lista ya montada.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [usuario, secciones.join('|')]
@@ -135,9 +131,20 @@ function Rutas({ usuario, onUsuario, toast }) {
     return <Landing onIngresar={() => ir(usuario ? rutaInicial : ENTRAR)} />
   }
 
+  // ---- Registro (la cuenta queda pendiente de aprobación) ----------------
+  if (!usuario && ruta === REGISTRO) {
+    return <Registro onIrALogin={() => ir(ENTRAR)} onVolver={() => ir(INICIO)} />
+  }
+
   // ---- Inicio de sesión --------------------------------------------------
   if (!usuario) {
-    return <Login onLogin={iniciarSesion} onVolver={() => ir(INICIO)} />
+    return (
+      <Login
+        onLogin={iniciarSesion}
+        onVolver={() => ir(INICIO)}
+        onCrearCuenta={() => ir(REGISTRO)}
+      />
+    )
   }
 
   // ---- Paneles -----------------------------------------------------------

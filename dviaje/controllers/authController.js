@@ -8,10 +8,9 @@ if (!process.env.JWT_SECRET) {
   console.error(' Falta JWT_SECRET en el archivo .env. Definelo antes de usar auth.');
 }
 
-// NO existe registro publico. Solo hay dos roles (Administrador y Conductor)
-// y las dos son cuentas de trabajo: las crea el administrador desde el panel
-// de Supabase. Si el registro estuviera abierto, cualquiera con el enlace se
-// haria una cuenta de conductor.
+// Solo hay dos roles (Administrador y Conductor). El registro publico
+// (controllers/cuentasController.js) crea cuentas de Conductor APAGADAS:
+// aqui se rechazan hasta que un administrador las apruebe.
 
 // 1. LOGIN -> guarda el token en una COOKIE httpOnly
 export const login = async (req, res, next) => {
@@ -31,6 +30,14 @@ export const login = async (req, res, next) => {
     const esValida = await bcrypt.compare(contrasena, usuario.contrasena);
     if (!esValida) {
       return res.status(401).json({ error: 'El correo o la contrasena son incorrectos.' });
+    }
+
+    // Se comprueba DESPUES de la contraseña: asi nadie puede averiguar si un
+    // correo tiene una solicitud pendiente sin conocer su clave.
+    if (usuario.activo === false) {
+      return res.status(403).json({
+        error: 'Tu cuenta todavía no está activa. Un administrador debe aprobarla antes de que puedas entrar.'
+      });
     }
 
     const { data: rol } = await supabase

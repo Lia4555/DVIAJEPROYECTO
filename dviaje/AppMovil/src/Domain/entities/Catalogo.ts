@@ -1,5 +1,6 @@
 // MODELOS de catalogo: tablas fijas que sirven para mostrar nombres
 // en vez de numeros (id_estado -> "En ruta", id_destino -> "Medellin").
+import { TipoAlerta } from './Admin';
 
 export interface EstadoServicio {
   id_estado: number;
@@ -27,12 +28,14 @@ export interface Catalogos {
   estados: EstadoServicio[];
   destinos: Destino[];
   tiposVehiculo: TipoVehiculo[];
+  tiposAlerta: TipoAlerta[];
 }
 
 export const catalogosVacios = (): Catalogos => ({
   estados: [],
   destinos: [],
-  tiposVehiculo: []
+  tiposVehiculo: [],
+  tiposAlerta: []
 });
 
 export const nombreEstado = (catalogos: Catalogos, id: number): string =>

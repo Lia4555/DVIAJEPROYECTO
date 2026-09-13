@@ -3,3 +3,5 @@ export * from './Servicio';
 export * from './Vehiculo';
 export * from './Alerta';
 export * from './Catalogo';
+export * from './SolicitudCuenta';
+export * from './Admin';

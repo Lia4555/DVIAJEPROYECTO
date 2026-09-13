@@ -8,9 +8,11 @@
 // ============================================================
 import { renderToString, renderToStaticMarkup } from 'react-dom/server'
 import App from '../src/App.jsx'
-import Dashboard from '../src/components/Dashboard.jsx'
+import Dashboard, { SECCIONES_ADMIN } from '../src/components/Dashboard.jsx'
+import Cuentas from '../src/components/Cuentas.jsx'
 import Landing from '../src/components/Landing.jsx'
 import Login from '../src/components/Login.jsx'
+import Registro, { validarRegistro } from '../src/components/Registro.jsx'
 import EntityForm from '../src/components/EntityForm.jsx'
 import PanelConductor from '../src/components/conductor/PanelConductor.jsx'
 import Pagination from '../src/components/ui/Pagination.jsx'
@@ -110,9 +112,31 @@ chequear('todas las imágenes tienen texto alternativo', (portada.match(/<img/g)
 chequear('ya no se ofrece crear una cuenta', portada.includes('Crear una cuenta'), false)
 
 const pantallaLogin = renderToStaticMarkup(
-  <ToastProvider><Login onLogin={() => {}} onVolver={() => {}} /></ToastProvider>
+  <ToastProvider><Login onLogin={() => {}} onVolver={() => {}} onCrearCuenta={() => {}} /></ToastProvider>
 )
-chequear('el login no enlaza a un registro público', pantallaLogin.includes('Crear una cuenta'), false)
+chequear('el login enlaza al registro', pantallaLogin.includes('Crear una cuenta'), true)
+chequear('el login ya no manda a pedir acceso al administrador', pantallaLogin.includes('Solicítalo al administrador'), false)
+
+renderiza('Registro', <ToastProvider><Registro onIrALogin={() => {}} onVolver={() => {}} /></ToastProvider>)
+const pantallaRegistro = renderToStaticMarkup(
+  <ToastProvider><Registro onIrALogin={() => {}} onVolver={() => {}} /></ToastProvider>
+)
+chequear('el registro pide los 8 datos', [
+  'reg-nombre', 'reg-apellido', 'reg-tipo_documento', 'reg-numero_documento',
+  'reg-telefono', 'reg-correo', 'reg-contrasena', 'reg-confirmar'
+].every((id) => pantallaRegistro.includes(`id="${id}"`)), true)
+chequear('el registro avisa que requiere aprobación', pantallaRegistro.includes('aprobará'), true)
+
+const registroValido = {
+  nombre: 'Ana', apellido: 'Ruiz', tipo_documento: 'CC', numero_documento: '1020304050',
+  telefono: '300 123 4567', correo: 'ana@correo.com', contrasena: 'claveSegura1', confirmar: 'claveSegura1'
+}
+chequear('registro válido sin errores', validarRegistro(registroValido), {})
+chequear(
+  'registro: contraseña corta, que no coincide y documento con puntos',
+  Object.keys(validarRegistro({ ...registroValido, contrasena: '123', confirmar: '124', numero_documento: '1.020.304' })).sort(),
+  ['confirmar', 'contrasena', 'numero_documento']
+)
 
 // -------------------------------------------- 2. NAVEGACIÓN
 console.log('\n· Navegación entre pantallas')
@@ -120,6 +144,9 @@ console.log('\n· Navegación entre pantallas')
 const panelAdmin = renderToStaticMarkup(
   <ToastProvider><Dashboard usuario={admin} nav={navFalso(PRIMERA_ADMIN)} onLogout={() => {}} /></ToastProvider>
 )
+chequear('el menú del administrador incluye «Cuentas de acceso»', panelAdmin.includes('Cuentas de acceso'), true)
+chequear('las rutas del administrador incluyen las cuentas', SECCIONES_ADMIN.includes('cuentas'), true)
+renderiza('Cuentas de acceso', <ToastProvider><Cuentas /></ToastProvider>)
 chequear('el panel trae las flechas Atrás y Adelante', [
   panelAdmin.includes('Volver a la pantalla anterior'),
   panelAdmin.includes('Ir a la pantalla siguiente')

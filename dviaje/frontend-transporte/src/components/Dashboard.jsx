@@ -1,14 +1,29 @@
 import { useEffect, useMemo, useState } from 'react'
-import { entities, groups, entidadesVisibles } from '../entities.js'
+import { groups, entidadesVisibles } from '../entities.js'
 import { iniciales, nombreVisible, puedeEscribir as tienePermisoDeEscritura } from '../lib/session.js'
+import Cuentas from './Cuentas.jsx'
 import DataTable from './DataTable.jsx'
 import { FlechasHistorial, PasoSecciones } from './ui/Navegador.jsx'
 import { IconBuscar, IconCerrar, IconMenu, IconSalir } from './ui/Icons.jsx'
 
-// Orden en el que se recorren las tablas con las flechas «Anterior / Siguiente»:
+// Sección propia (no es una tabla genérica): las solicitudes de cuenta.
+// Va la primera del grupo «Personas».
+export const SECCION_CUENTAS = {
+  key: 'cuentas',
+  label: 'Cuentas de acceso',
+  group: 'Personas'
+}
+
+// Orden en el que se recorren las secciones con las flechas «Anterior / Siguiente»:
 // el mismo que se ve en el menú lateral.
-const ORDEN = groups.flatMap((grupo) => entidadesVisibles.filter((e) => e.group === grupo))
+const ORDEN = groups.flatMap((grupo) => [
+  ...(grupo === SECCION_CUENTAS.group ? [SECCION_CUENTAS] : []),
+  ...entidadesVisibles.filter((e) => e.group === grupo)
+])
 const CLAVES = ORDEN.map((e) => e.key)
+
+// App.jsx usa esta lista para saber qué rutas existen para el administrador.
+export const SECCIONES_ADMIN = CLAVES
 
 // La navegación llega desde App.jsx: portada, login y panel comparten un
 // único historial, y por eso las flechas del navegador se mueven dentro de
@@ -20,7 +35,7 @@ export default function Dashboard({ usuario, nav, onLogout }) {
   const [filtro, setFiltro] = useState('')
 
   const entidadActiva = useMemo(
-    () => entities.find((e) => e.key === ruta) || ORDEN[0],
+    () => ORDEN.find((e) => e.key === ruta) || ORDEN[0],
     [ruta]
   )
   const puedeEscribir = tienePermisoDeEscritura(usuario)
@@ -42,7 +57,7 @@ export default function Dashboard({ usuario, nav, onLogout }) {
     return groups
       .map((grupo) => ({
         grupo,
-        items: entidadesVisibles.filter(
+        items: ORDEN.filter(
           (e) => e.group === grupo && (!termino || e.label.toLowerCase().includes(termino))
         )
       }))
@@ -162,11 +177,15 @@ export default function Dashboard({ usuario, nav, onLogout }) {
         </header>
 
         <main className="content" id="contenido">
-          <DataTable
-            key={entidadActiva.key}
-            entity={entidadActiva}
-            puedeEscribir={puedeEscribir}
-          />
+          {entidadActiva.key === SECCION_CUENTAS.key ? (
+            <Cuentas />
+          ) : (
+            <DataTable
+              key={entidadActiva.key}
+              entity={entidadActiva}
+              puedeEscribir={puedeEscribir}
+            />
+          )}
 
           <div className="panel">
             <PasoSecciones anterior={anterior} siguiente={siguiente} onIr={ir} />

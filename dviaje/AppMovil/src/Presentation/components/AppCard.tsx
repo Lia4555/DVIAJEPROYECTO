@@ -2,19 +2,20 @@ import React, { ReactNode } from 'react';
 import {
   Pressable,
   PressableStateCallbackType,
+  StyleProp,
   StyleSheet,
   View,
   ViewStyle
 } from 'react-native';
-import { colors, radius, spacing } from '../theme';
+import { colors, radius, sombras, spacing } from '../theme';
 
 interface Props {
   children: ReactNode;
   onPress?: () => void;
-  estilo?: ViewStyle;
+  estilo?: StyleProp<ViewStyle>;
 }
 
-/** Tarjeta contenedora. Si recibe onPress se comporta como boton. */
+/** Tarjeta blanca con borde y sombra suave. Si recibe onPress se comporta como boton. */
 export const AppCard = ({ children, onPress, estilo }: Props) => {
   if (!onPress) return <View style={[estilos.tarjeta, estilo]}>{children}</View>;
 
@@ -34,12 +35,13 @@ export const AppCard = ({ children, onPress, estilo }: Props) => {
 
 const estilos = StyleSheet.create({
   tarjeta: {
-    backgroundColor: colors.superficie,
-    borderRadius: radius.lg,
+    backgroundColor: colors.blanco,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.borde,
-    padding: spacing.lg,
-    gap: spacing.sm
+    borderColor: colors.linea,
+    padding: spacing.xl,
+    gap: spacing.lg,
+    ...sombras.s1
   },
-  presionada: { opacity: 0.75 }
+  presionada: { borderColor: colors.salmon, backgroundColor: '#fffdfd' }
 });

@@ -30,8 +30,14 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (p. ej. EXPO_PUBLIC_API_URL). Se ignoran aqui mismo para
+# no depender del .gitignore de la carpeta padre si la app se mueve.
+.env
 .env*.local
+
+# IDE
+.idea/
+.vscode/
 
 # typescript
 *.tsbuildinfo

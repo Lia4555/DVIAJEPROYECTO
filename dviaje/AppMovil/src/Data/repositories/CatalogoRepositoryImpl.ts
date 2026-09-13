@@ -15,13 +15,15 @@ export class CatalogoRepositoryImpl implements CatalogoRepository {
   async cargar(): Promise<Catalogos> {
     if (this.cache) return this.cache;
 
-    const [estados, destinos, tiposVehiculo] = await Promise.all([
+    const [estados, destinos, tiposVehiculo, tiposAlerta] = await Promise.all([
       this.api.estadosServicio(),
       this.api.destinos(),
-      this.api.tiposVehiculo()
+      this.api.tiposVehiculo(),
+      // Si fallara, no se bloquea el resto: solo lo usa el formulario de alertas.
+      this.api.tiposAlerta().catch(() => [])
     ]);
 
-    this.cache = { estados, destinos, tiposVehiculo };
+    this.cache = { estados, destinos, tiposVehiculo, tiposAlerta };
     return this.cache;
   }
 

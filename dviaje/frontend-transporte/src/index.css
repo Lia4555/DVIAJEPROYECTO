@@ -388,6 +388,30 @@ input:disabled, textarea:disabled, select:disabled {
   color: #fff;
 }
 .auth-brand.compacta { color: var(--vino); margin-bottom: 20px; }
+
+/* «Volver a la página principal», arriba de la tarjeta de login y registro */
+.auth-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -6px 0 18px -10px;
+  padding: 6px 12px 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--pill);
+  background: none;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.auth-volver:hover {
+  background: var(--rojo-suave);
+  border-color: #f6d3d3;
+  color: var(--vino);
+}
+.auth-volver svg { flex-shrink: 0; transition: transform 0.15s; }
+.auth-volver:hover svg { transform: translateX(-2px); }
 .auth-brand .brand-name { font-size: 1.05rem; }
 
 .brand-mark {
@@ -784,6 +808,28 @@ input:disabled, textarea:disabled, select:disabled {
 .badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .badge.ok { background: var(--verde-suave); color: #1d6b41; }
 .badge.bad { background: var(--fondo-input); color: var(--muted); }
+.badge.warn { background: var(--ambar-suave); color: var(--ambar); }
+
+/* Cuentas de acceso (Cuentas.jsx) */
+.segmentos { display: flex; flex-wrap: wrap; gap: 6px; }
+.segmento {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--pill);
+  background: var(--blanco);
+  color: var(--texto);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.segmento:hover { border-color: var(--salmon); }
+.segmento.activo { background: var(--vino); border-color: var(--vino); color: #fff; }
+.segmento.activo .chip { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.cuenta-tuya { margin-left: 8px; }
+.acciones-cuenta { display: inline-flex; gap: 6px; }
 
 .skeleton {
   display: block;

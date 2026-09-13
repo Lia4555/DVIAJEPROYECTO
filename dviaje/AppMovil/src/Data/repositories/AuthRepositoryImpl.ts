@@ -1,4 +1,11 @@
-import { Sesion, Usuario } from '../../Domain/entities';
+import {
+  CampoSolicitud,
+  ErrorValidacion,
+  ErroresCampos,
+  Sesion,
+  SolicitudCuenta,
+  Usuario
+} from '../../Domain/entities';
 import { AuthRepository } from '../../Domain/repositories';
 import { ApiError, HttpClient } from '../api/HttpClient';
 import { SessionStorage } from '../local/SessionStorage';
@@ -33,6 +40,24 @@ export class AuthRepositoryImpl implements AuthRepository {
     this.http.usarToken(sesion.token);
     await this.almacen.guardar(sesion);
     return sesion;
+  }
+
+  /**
+   * No inicia sesion: la cuenta nace pendiente de aprobacion. Si el servidor
+   * rechaza algun campo, se devuelve como ErrorValidacion para pintarlo
+   * debajo de su input.
+   */
+  async registrarCuenta(solicitud: SolicitudCuenta): Promise<string> {
+    try {
+      return await this.api.registrar(solicitud);
+    } catch (error) {
+      if (error instanceof ApiError && error.detalles.length > 0) {
+        const campos: ErroresCampos = {};
+        for (const d of error.detalles) campos[d.campo as CampoSolicitud] = d.mensaje;
+        throw new ErrorValidacion(campos, error.message);
+      }
+      throw error;
+    }
   }
 
   async sesionGuardada(): Promise<Sesion | null> {

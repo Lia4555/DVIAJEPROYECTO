@@ -1,0 +1,10 @@
+import { AccionCuenta, ConductorResumen, CuentaAcceso } from '../entities';
+
+// CONTRATO de lo que solo gestiona el administrador: cuentas de acceso y
+// la lista de conductores (para asignar servicios y enviar alertas).
+export interface AdminRepository {
+  cuentas(): Promise<CuentaAcceso[]>;
+  /** Aprueba, desactiva o rechaza una cuenta. Devuelve el mensaje del servidor. */
+  gestionarCuenta(idUsuario: string, accion: AccionCuenta): Promise<string>;
+  conductores(): Promise<ConductorResumen[]>;
+}

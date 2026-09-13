@@ -4,25 +4,58 @@ import { useCallback, useState } from 'react';
 //  VIEWMODEL DE NAVEGACION
 // ------------------------------------------------------------
 //  Navegacion propia con un estado simple, sin librerias extra.
-//  Cuatro pestanas y una pantalla de detalle encima.
+//  Pestañas abajo y, encima de ellas, una pantalla de detalle o un
+//  formulario. El conductor y el administrador tienen pestañas distintas.
 // ============================================================
 
-export type Pestana = 'servicios' | 'vehiculo' | 'alertas' | 'perfil';
+export type Pestana =
+  // Conductor
+  | 'servicios'
+  | 'vehiculo'
+  | 'alertas'
+  | 'perfil'
+  // Administrador (tambien usa servicios, alertas y perfil)
+  | 'resumen'
+  | 'cuentas';
 
-export const useNavegacion = () => {
-  const [pestana, setPestana] = useState<Pestana>('servicios');
+/** Formularios que se abren a pantalla completa (solo administrador). */
+export type Formulario = 'nuevo-servicio' | 'nueva-alerta';
+
+/** Filtro con el que se abre una lista al llegar desde el resumen. */
+export type FiltroInicial = string | null;
+
+export const useNavegacion = (inicial: Pestana = 'servicios') => {
+  const [pestana, setPestana] = useState<Pestana>(inicial);
   const [servicioAbierto, setServicioAbierto] = useState<number | null>(null);
+  const [formulario, setFormulario] = useState<Formulario | null>(null);
+  const [filtro, setFiltro] = useState<FiltroInicial>(null);
 
-  const irA = useCallback((destino: Pestana) => {
-    setServicioAbierto(null); // cambiar de pestana cierra el detalle
+  const irA = useCallback((destino: Pestana, filtroInicial: FiltroInicial = null) => {
+    // Cambiar de pestaña cierra lo que estuviera abierto encima.
+    setServicioAbierto(null);
+    setFormulario(null);
+    setFiltro(filtroInicial);
     setPestana(destino);
   }, []);
 
-  const abrirServicio = useCallback((idServicio: number) => {
-    setServicioAbierto(idServicio);
-  }, []);
+  const abrirServicio = useCallback((idServicio: number) => setServicioAbierto(idServicio), []);
+  const abrirFormulario = useCallback((f: Formulario) => setFormulario(f), []);
 
-  const volver = useCallback(() => setServicioAbierto(null), []);
+  /** Cierra la capa de encima (formulario primero, luego el detalle). */
+  const volver = useCallback(() => {
+    if (formulario) setFormulario(null);
+    else setServicioAbierto(null);
+  }, [formulario]);
 
-  return { pestana, servicioAbierto, irA, abrirServicio, volver };
+  return {
+    pestana,
+    servicioAbierto,
+    formulario,
+    filtro,
+    inicial,
+    irA,
+    abrirServicio,
+    abrirFormulario,
+    volver
+  };
 };

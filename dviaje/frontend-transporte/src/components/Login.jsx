@@ -5,7 +5,7 @@ import { IconAlerta, IconOjo, IconOjoCerrado } from './ui/Icons.jsx'
 
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
-export default function Login({ onLogin, onVolver }) {
+export default function Login({ onLogin, onVolver, onCrearCuenta }) {
   const [correo, setCorreo] = useState('')
   const [contrasena, setContrasena] = useState('')
   const [verClave, setVerClave] = useState(false)
@@ -110,11 +110,16 @@ export default function Login({ onLogin, onVolver }) {
         </button>
       </form>
 
-      {/* No hay registro público: las cuentas (Administrador o Conductor) las
-          crea el administrador de la empresa. */}
-      <p className="auth-foot">
-        ¿No tienes acceso? Solicítalo al administrador de la flota.
-      </p>
+      {/* El registro crea una cuenta de conductor apagada: no entra hasta que
+          un administrador la apruebe. */}
+      {onCrearCuenta && (
+        <p className="auth-foot">
+          ¿No tienes cuenta?{' '}
+          <button type="button" className="linkbtn" onClick={onCrearCuenta}>
+            Crear una cuenta
+          </button>
+        </p>
+      )}
     </AuthLayout>
   )
 }

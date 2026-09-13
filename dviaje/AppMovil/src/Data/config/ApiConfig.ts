@@ -1,34 +1,53 @@
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 // ============================================================
 //  UNICO SITIO DONDE SE CONFIGURA LA DIRECCION DEL BACKEND
 // ------------------------------------------------------------
 //  El servidor es el de este mismo proyecto (server.js, puerto 3000).
+//  La direccion se decide en este orden:
 //
-//  · Emulador de Android Studio: 10.0.2.2 es como el emulador llama al
-//    "localhost" del computador. NO sirve 127.0.0.1: eso seria el
-//    propio telefono virtual.
-//  · Telefono fisico por USB o wifi: pon aqui la IP del computador en
-//    la red local (ipconfig -> "Direccion IPv4", algo como
-//    192.168.1.15) y asegurate de que ambos esten en la misma wifi.
+//   1. EXPO_PUBLIC_API_URL, si esta definida (archivo .env de AppMovil
+//      o variable de entorno al lanzar Expo). Ej.:
+//        EXPO_PUBLIC_API_URL=http://192.168.1.15:3000/api
+//
+//   2. La IP del computador que ejecuta Expo. Expo ya la conoce (es desde
+//      donde el telefono descarga la app), asi que sirve igual en un
+//      telefono fisico por wifi que en el emulador, sin tocar codigo.
+//
+//   3. Si no hay nada de lo anterior: 10.0.2.2 en el emulador de Android
+//      (asi llama el emulador al "localhost" del computador) y localhost
+//      en iOS.
 // ============================================================
-
-/** Cambia esto si pruebas en un telefono real. */
-const IP_EN_RED_LOCAL = '192.168.1.10';
 
 const PUERTO = 3000;
 
-const HOST_POR_PLATAFORMA = Platform.select({
-  android: `10.0.2.2:${PUERTO}`, // emulador de Android Studio
-  ios: `localhost:${PUERTO}`,
-  default: `localhost:${PUERTO}`
-});
+const hostDelServidorExpo = (): string | null => {
+  // hostUri llega como "192.168.1.15:8081" mientras se desarrolla con Expo.
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (!hostUri) return null;
+
+  const host = hostUri.split(':')[0];
+  if (!host) return null;
+
+  // "localhost" dentro del emulador de Android es el propio emulador.
+  if (Platform.OS === 'android' && (host === 'localhost' || host === '127.0.0.1')) {
+    return '10.0.2.2';
+  }
+  return host;
+};
+
+const resolverBaseUrl = (): string => {
+  const definida = process.env.EXPO_PUBLIC_API_URL?.trim();
+  if (definida) return definida.replace(/\/+$/, '');
+
+  const host =
+    hostDelServidorExpo() ?? (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
+  return `http://${host}:${PUERTO}/api`;
+};
 
 export const ApiConfig = {
-  baseUrl: `http://${HOST_POR_PLATAFORMA}/api`,
-
-  /** Direccion para telefono fisico. Usala si el emulador no aplica. */
-  baseUrlDispositivoFisico: `http://${IP_EN_RED_LOCAL}:${PUERTO}/api`,
+  baseUrl: resolverBaseUrl(),
 
   /** Si el servidor no contesta en este tiempo, se corta la peticion. */
   timeoutMs: 15000,

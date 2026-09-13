@@ -35,6 +35,25 @@ const fallar = (config, status, error) => {
 // y la aplicación enseña la portada pública.
 let sesionDemo = null
 
+// Solicitudes de cuenta de la demo: una pendiente para poder probar «Aprobar».
+const cuentasDemo = [
+  {
+    id_usuario: 'demo-pendiente',
+    nombre: 'Laura',
+    apellido: 'Gómez',
+    correo: 'laura.gomez@correo.com',
+    telefono: '300 555 1234',
+    activo: false,
+    estado: 'pendiente',
+    rol: 'Conductor',
+    tiene_ficha: true,
+    tipo_documento: 'CC',
+    numero_documento: '1020304050',
+    fecha_registro: new Date().toISOString(),
+    es_tu_cuenta: false
+  }
+]
+
 api.defaults.adapter = async (config) => {
   await espera(220) // latencia simulada para ver los estados de carga
 
@@ -73,6 +92,45 @@ api.defaults.adapter = async (config) => {
       sesionDemo = null
       return responder(config, 200, { message: 'Sesion cerrada' })
     }
+
+    if (id === 'register') {
+      cuentasDemo.unshift({
+        id_usuario: `demo-${Date.now()}`,
+        nombre: cuerpo.nombre,
+        apellido: cuerpo.apellido,
+        correo: cuerpo.correo,
+        telefono: cuerpo.telefono,
+        activo: false,
+        estado: 'pendiente',
+        rol: 'Conductor',
+        tiene_ficha: true,
+        tipo_documento: cuerpo.tipo_documento,
+        numero_documento: cuerpo.numero_documento,
+        fecha_registro: new Date().toISOString(),
+        es_tu_cuenta: false
+      })
+      return responder(config, 201, {
+        message: 'Solicitud enviada. Un administrador debe aprobar tu cuenta antes de que puedas iniciar sesión.'
+      })
+    }
+  }
+
+  // ---- Cuentas de acceso simuladas (solo administrador)
+  if (recurso === 'cuentas') {
+    if (metodo === 'get') return responder(config, 200, cuentasDemo)
+    const i = cuentasDemo.findIndex((c) => c.id_usuario === id)
+    if (i === -1) return fallar(config, 404, 'Cuenta no encontrada.')
+    if (metodo === 'delete') {
+      cuentasDemo.splice(i, 1)
+      return responder(config, 200, { success: true, message: 'Solicitud rechazada.' })
+    }
+    const accion = ruta.split('/')[2]
+    const aprobar = accion === 'aprobar'
+    cuentasDemo[i] = { ...cuentasDemo[i], activo: aprobar, estado: aprobar ? 'activa' : 'desactivada' }
+    return responder(config, 200, {
+      success: true,
+      message: accion === 'aprobar' ? 'Cuenta aprobada.' : 'Cuenta desactivada.'
+    })
   }
 
   const registro = almacen.get(recurso)

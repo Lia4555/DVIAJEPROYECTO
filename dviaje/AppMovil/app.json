@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Transporte",
+    "name": "D' VIAJE",
     "slug": "AppMovil",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0F172A",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#f5f6f9",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.transporte.appmovil"
@@ -15,7 +15,7 @@
       "package": "com.transporte.appmovil",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#0F172A",
+        "backgroundColor": "#7a1113",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"

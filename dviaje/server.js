@@ -18,6 +18,7 @@ if (faltantes.length) {
 // (JWT_SECRET, credenciales de Supabase) los verian vacios.
 const { configureGenericRouter } = await import('./routers/genericRouter.js');
 const { authRouter } = await import('./routers/authRouter.js');
+const { cuentasRouter } = await import('./routers/cuentasRouter.js');
 const { errorHandler } = await import('./middleware/errorHandler.js');
 const { supabase } = await import('./config/supabase.js');
 const { cookieOptions } = await import('./config/cookies.js');
@@ -51,8 +52,11 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas de autenticación (login, register, logout, me)
+// Rutas de autenticación (register, login, logout, me)
 app.use('/api/auth', authRouter);
+
+// Cuentas de acceso: aprobar, desactivar o rechazar (solo administrador)
+app.use('/api/cuentas', cuentasRouter);
 
 // Mapeo de tablas -> endpoints
 const tablasConfig = [

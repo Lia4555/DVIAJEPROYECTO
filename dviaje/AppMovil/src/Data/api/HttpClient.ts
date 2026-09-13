@@ -4,8 +4,18 @@ import { ApiConfig } from '../config/ApiConfig';
 // aqui se pone el token, se corta por tiempo de espera y se traduce el
 // error del servidor a un mensaje que la pantalla pueda mostrar.
 
+export interface DetalleError {
+  campo: string;
+  mensaje: string;
+}
+
 export class ApiError extends Error {
-  constructor(public readonly status: number, mensaje: string) {
+  constructor(
+    public readonly status: number,
+    mensaje: string,
+    /** Errores por campo que manda el backend ({ detalles: [{ campo, mensaje }] }). */
+    public readonly detalles: DetalleError[] = []
+  ) {
     super(mensaje);
     this.name = 'ApiError';
   }
@@ -20,7 +30,7 @@ export class ApiError extends Error {
   }
 }
 
-type Metodo = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type Metodo = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export class HttpClient {
   private token: string | null = null;
@@ -42,6 +52,14 @@ export class HttpClient {
 
   put<T>(ruta: string, cuerpo: unknown): Promise<T> {
     return this.peticion<T>('PUT', ruta, cuerpo);
+  }
+
+  patch<T>(ruta: string, cuerpo: unknown = {}): Promise<T> {
+    return this.peticion<T>('PATCH', ruta, cuerpo);
+  }
+
+  delete<T>(ruta: string): Promise<T> {
+    return this.peticion<T>('DELETE', ruta);
   }
 
   private async peticion<T>(metodo: Metodo, ruta: string, cuerpo?: unknown): Promise<T> {
@@ -70,7 +88,11 @@ export class HttpClient {
           (datos && typeof datos === 'object' && 'error' in datos
             ? String((datos as { error: unknown }).error)
             : null) ?? `Error ${respuesta.status} al conectar con el servidor.`;
-        throw new ApiError(respuesta.status, mensaje);
+        const detalles =
+          datos && typeof datos === 'object' && Array.isArray((datos as { detalles?: unknown }).detalles)
+            ? ((datos as { detalles: DetalleError[] }).detalles)
+            : [];
+        throw new ApiError(respuesta.status, mensaje, detalles);
       }
 
       return datos as T;

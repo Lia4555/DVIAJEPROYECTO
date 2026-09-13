@@ -1,4 +1,5 @@
 export * from './auth/IniciarSesion';
+export * from './auth/RegistrarCuenta';
 export * from './auth/RestaurarSesion';
 export * from './auth/CerrarSesion';
 export * from './servicios/ListarServicios';
@@ -7,3 +8,7 @@ export * from './vehiculos/ObtenerVehiculos';
 export * from './vehiculos/ReportarEstadoVehiculo';
 export * from './alertas/ListarAlertas';
 export * from './CargarCatalogos';
+export * from './admin/ObtenerResumenAdmin';
+export * from './admin/GestionCuentas';
+export * from './admin/GestionServicios';
+export * from './admin/GestionAlertas';

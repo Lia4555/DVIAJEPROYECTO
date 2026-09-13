@@ -1,4 +1,8 @@
 -- =====================================================================
+-- !!! OBSOLETO - NO EJECUTAR !!!
+-- Este script mantenia un tercer rol "Cliente". El sistema ya no tiene
+-- usuarios Cliente: usa sql/roles-2-niveles.sql en su lugar.
+-- =====================================================================
 -- CORRECCION DE LOS NIVELES DE PERMISO
 -- Ejecutar en Supabase: panel del proyecto -> SQL Editor -> New query
 -- =====================================================================

@@ -28,7 +28,17 @@ export const errorHandler = (err, req, res, next) => {
       break;
   }
 
-  // 3) Cualquier otro error
+  // 3) La base de datos (Supabase) no respondió a tiempo o está caída un momento.
+  //    supabase-js entrega esos casos con el texto de la pasarela y sin código
+  //    de Postgres; se traducen a un 503 con un mensaje que se entienda.
+  const textoPasarela = /gateway time-?out|bad gateway|service unavailable|fetch failed|aborted/i;
+  if (!err.status && !err.code && textoPasarela.test(err.message || '')) {
+    return res.status(503).json({
+      error: 'La base de datos tardó en responder. Inténtalo de nuevo en unos segundos.'
+    });
+  }
+
+  // 4) Cualquier otro error
   const status = err.status || 500;
   // En producción NO se revela el mensaje interno de un error 500 (evita filtrar
   // detalles de la base de datos o del código). En desarrollo sí, para depurar.

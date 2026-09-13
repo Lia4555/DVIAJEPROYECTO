@@ -1,7 +1,13 @@
 import {
+  AccionCuenta,
   Alerta,
   CambioServicio,
+  ConductorResumen,
+  CuentaAcceso,
   Destino,
+  NuevaAlerta,
+  NuevoServicio,
+  TipoAlerta,
   DocumentoVehiculo,
   EstadoServicio,
   Mantenimiento,
@@ -76,5 +82,42 @@ export class TransporteApiSource {
 
   tiposVehiculo(): Promise<TipoVehiculo[]> {
     return this.http.get<TipoVehiculo[]>('/tipos-vehiculo');
+  }
+
+  tiposAlerta(): Promise<TipoAlerta[]> {
+    return this.http.get<TipoAlerta[]>('/tipos-alerta');
+  }
+
+  // ---- Solo administrador (el backend responde 403 a un conductor) ----
+
+  async crearServicio(nuevo: NuevoServicio): Promise<Servicio> {
+    const r = await this.http.post<RespuestaActualizacion<Servicio>>('/servicios', nuevo);
+    return r.data;
+  }
+
+  async crearAlerta(nueva: NuevaAlerta): Promise<Alerta> {
+    const r = await this.http.post<RespuestaActualizacion<Alerta>>('/alertas', nueva);
+    return r.data;
+  }
+
+  async actualizarAlerta(idAlerta: number, cambios: Partial<Alerta>): Promise<Alerta> {
+    const r = await this.http.put<RespuestaActualizacion<Alerta>>(`/alertas/${idAlerta}`, cambios);
+    return r.data;
+  }
+
+  conductores(): Promise<ConductorResumen[]> {
+    return this.http.get<ConductorResumen[]>('/conductor');
+  }
+
+  cuentas(): Promise<CuentaAcceso[]> {
+    return this.http.get<CuentaAcceso[]>('/cuentas');
+  }
+
+  async gestionarCuenta(idUsuario: string, accion: AccionCuenta): Promise<string> {
+    const r =
+      accion === 'rechazar'
+        ? await this.http.delete<{ message: string }>(`/cuentas/${idUsuario}`)
+        : await this.http.patch<{ message: string }>(`/cuentas/${idUsuario}/${accion}`);
+    return r.message;
   }
 }

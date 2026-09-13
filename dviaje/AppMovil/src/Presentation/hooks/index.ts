@@ -5,3 +5,6 @@ export * from './useServiciosViewModel';
 export * from './useServicioDetalleViewModel';
 export * from './useVehiculoViewModel';
 export * from './useAlertasViewModel';
+export * from './useRegistroViewModel';
+export * from './useAdmin';
+export * from './useFormulariosAdmin';

@@ -41,26 +41,30 @@ WHERE NOT EXISTS (SELECT 1 FROM public.roles WHERE nombre_rol = 'Conductor');
 -- ---------------------------------------------------------------------
 -- Si hay varios roles llamados "Administrador" (o "Conductor"), se conserva
 -- el de id mas bajo y todos los usuarios se mueven a el.
+--
+-- Las variables llevan el prefijo "v_": la tabla conductor tiene una columna
+-- llamada id_conductor, y con el mismo nombre Postgres no sabria cual es cual
+-- (error 42702 "column reference is ambiguous").
 DO $$
 DECLARE
-  id_admin integer;
-  id_conductor integer;
+  v_rol_admin     integer;
+  v_rol_conductor integer;
 BEGIN
-  SELECT min(id_rol) INTO id_admin     FROM public.roles WHERE nombre_rol = 'Administrador';
-  SELECT min(id_rol) INTO id_conductor FROM public.roles WHERE nombre_rol = 'Conductor';
+  SELECT min(id_rol) INTO v_rol_admin     FROM public.roles WHERE nombre_rol = 'Administrador';
+  SELECT min(id_rol) INTO v_rol_conductor FROM public.roles WHERE nombre_rol = 'Conductor';
 
-  UPDATE public.usuario SET id_rol = id_admin
+  UPDATE public.usuario SET id_rol = v_rol_admin
    WHERE id_rol IN (SELECT id_rol FROM public.roles WHERE nombre_rol = 'Administrador');
-  UPDATE public.conductor SET id_rol = id_admin
+  UPDATE public.conductor SET id_rol = v_rol_admin
    WHERE id_rol IN (SELECT id_rol FROM public.roles WHERE nombre_rol = 'Administrador');
 
-  UPDATE public.usuario SET id_rol = id_conductor
+  UPDATE public.usuario SET id_rol = v_rol_conductor
    WHERE id_rol IN (SELECT id_rol FROM public.roles WHERE nombre_rol = 'Conductor');
-  UPDATE public.conductor SET id_rol = id_conductor
+  UPDATE public.conductor SET id_rol = v_rol_conductor
    WHERE id_rol IN (SELECT id_rol FROM public.roles WHERE nombre_rol = 'Conductor');
 
   -- Toda ficha de la tabla "conductor" es, por definicion, un conductor.
-  UPDATE public.conductor SET id_rol = id_conductor WHERE id_rol <> id_admin;
+  UPDATE public.conductor SET id_rol = v_rol_conductor WHERE id_rol <> v_rol_admin;
 END $$;
 
 
@@ -80,29 +84,24 @@ UPDATE public.roles
 
 
 -- ---------------------------------------------------------------------
--- PASO 4 - Que hacer con los usuarios que NO son admin ni conductor
+-- PASO 4 - Borrar las cuentas que NO son admin ni conductor
 -- ---------------------------------------------------------------------
--- Aqui caen los antiguos "Cliente" y cualquier rol de prueba.
--- Mira primero a quienes afecta:
+-- Decision tomada: en el sistema NO hay usuarios Cliente. Sus cuentas de
+-- acceso (tabla "usuario") se borran, igual que las de cualquier rol de
+-- prueba. La tabla "cliente" (los pasajeros a los que se hacen reservas)
+-- NO se toca: esos datos los sigue gestionando el administrador.
+--
+-- Para ver ANTES de ejecutar a quienes afecta:
 --
 --   SELECT u.correo, r.nombre_rol
 --     FROM public.usuario u JOIN public.roles r USING (id_rol)
 --    WHERE r.nombre_rol NOT IN ('Administrador', 'Conductor');
 --
--- Y DESCOMENTA UNA de las dos opciones (solo una):
-
--- OPCION A - Convertirlos en Conductor.
---            Ojo: cada uno necesita ademas una ficha en la tabla "conductor"
---            con el MISMO correo, si no, no podra iniciar sesion.
--- UPDATE public.usuario
---    SET id_rol = (SELECT id_rol FROM public.roles WHERE nombre_rol = 'Conductor')
---  WHERE id_rol IN (SELECT id_rol FROM public.roles
---                    WHERE nombre_rol NOT IN ('Administrador', 'Conductor'));
-
--- OPCION B - Borrar esas cuentas (ya no existe el rol de cliente).
--- DELETE FROM public.usuario
---  WHERE id_rol IN (SELECT id_rol FROM public.roles
---                    WHERE nombre_rol NOT IN ('Administrador', 'Conductor'));
+-- Si otra tabla todavia apunta a alguna de estas cuentas, el DELETE falla,
+-- la transaccion se cancela y no se borra nada.
+DELETE FROM public.usuario
+ WHERE id_rol IN (SELECT id_rol FROM public.roles
+                   WHERE nombre_rol NOT IN ('Administrador', 'Conductor'));
 
 
 -- ---------------------------------------------------------------------
@@ -122,7 +121,7 @@ BEGIN
 
   IF pendientes > 0 THEN
     RAISE EXCEPTION
-      'Hay % usuario(s) con un rol distinto de Administrador/Conductor. Descomenta la OPCION A o la B del PASO 4 y vuelve a ejecutar.', pendientes;
+      'Siguen quedando % usuario(s) con un rol distinto de Administrador/Conductor despues del PASO 4.', pendientes;
   END IF;
 
   -- 5.2 Aviso (no bloquea): conductores que no podran iniciar sesion porque
